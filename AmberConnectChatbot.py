@@ -436,7 +436,7 @@ def main():
             else:
                 last_asked_qn = 'None'
                 api_data = 'None'
-            st.write('this response is from final LLM')
+            
             final_message = final_llm(last_asked_qn, api_data,user_question)
             st.session_state["chat_history"].append({"role": "assistant", "content": final_message})
             st.chat_message("assistant").write(final_message)
