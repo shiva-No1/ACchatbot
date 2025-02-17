@@ -11,6 +11,7 @@ from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 import requests
 import json
 import dateparser
+import gdown
 
 
 
@@ -34,8 +35,21 @@ groq_chat = ChatGroq(
     model_name='deepseek-r1-distill-llama-70b'
 )
 
+chunk_FILE_ID = "1BNCPcxrqVMVosW96-u6LAYN5N6iOVBLq"
+chunk_URL = f"https://drive.google.com/uc?id={chunk_FILE_ID}"
+
+# Download the file
+gdown.download(chunk_URL, "chunks.json", quiet=True)
+
+# Read and parse JSON
 with open("chunks.json", "r", encoding="utf-8") as f:
     documents = json.load(f)
+    
+vector_FILE_ID = "1Ca0O7cjAbI3t_OdCciQ0aI2MeJ7kN7SC"
+vector_URL = f"https://drive.google.com/uc?id={vector_FILE_ID}"
+# Download the FAISS index file
+gdown.download(vector_URL, "faissindex.index", quiet=True)
+
 
 def retrieve_document(user_question):
     faiss_index = faiss.read_index("faissindex.index")
