@@ -340,6 +340,7 @@ You are *Amber Assistant*, an AI specialized in vehicle tracking and fleet manag
     conversation = LLMChain(llm=groq_chat, prompt=prompt)
     data = conversation.predict(human_input=question, chat_history=st.session_state['chat_history'])
     clean_query = re.sub(r"<think>.*?</think>\s*", "", data, flags=re.DOTALL)
+    st.write('second llm')
     return clean_query
 
 
