@@ -361,7 +361,7 @@ def side_bar(amber_auth_token, custom_start_date, custom_end_date):
 def main():
     st.header("Amber connect chatbot")
     st.sidebar.header('Debug Mode:')
-
+    
     for chat in st.session_state.chat_history:
         if isinstance(chat, tuple):  # Fix tuple format
             role, content = chat
@@ -419,10 +419,14 @@ def main():
             prompt = ask_llm(missing_params ,user_question)
             clean_prompt = re.sub(r"<think>.*?</think>\s*", "", prompt, flags=re.DOTALL)
             st.session_state["chat_history"].append({"role": "assistant", "content": clean_prompt})
-            st.chat_message("assistant").write(clean_prompt)
             
-      
+            if not (amber_auth_token and custom_start_date and custom_end_date and final_url):
+            
+                st.chat_message("assistant").write(clean_prompt)
+            
         if amber_auth_token and custom_start_date and custom_end_date and final_url :
+            
+            count_of_keys = len(st.session_state["user_questions"].keys())
 
             final_url_from_last_question = list(st.session_state["final_url"].values())[-1]
             url = url_finder(final_url_from_last_question)
@@ -433,6 +437,12 @@ def main():
                 api_data = api_data_fetcher(final_api_url)
                 st.sidebar.subheader('Here is the final url:')
                 st.sidebar.success(final_api_url)
+            elif count_of_keys == 1:
+                last_asked_qn = list(st.session_state["user_questions"].values())[-1]
+                api_data = api_data_fetcher(final_api_url)
+                st.sidebar.subheader('Here is the final url:')
+                st.sidebar.success(final_api_url)
+
             else:
                 last_asked_qn = 'None'
                 api_data = 'None'
