@@ -13,8 +13,6 @@ import json
 import dateparser
 import gdown
 
-
-
 # Initialize Session State
 if "chat_history" not in st.session_state:
     st.session_state['chat_history'] = [{'role': 'assistant', 'content': f"Hello! I am Amber Connect Bot. How can i Help you?"}]
@@ -35,24 +33,29 @@ groq_chat = ChatGroq(
     model_name='deepseek-r1-distill-llama-70b'
 )
 
-chunk_FILE_ID = "1BNCPcxrqVMVosW96-u6LAYN5N6iOVBLq"
-chunk_URL = f"https://drive.google.com/uc?id={chunk_FILE_ID}"
+def chunk_data():
+    chunk_FILE_ID = "1BNCPcxrqVMVosW96-u6LAYN5N6iOVBLq"
+    chunk_URL = f"https://drive.google.com/uc?id={chunk_FILE_ID}"
 
-# Download the file
-gdown.download(chunk_URL, "chunks.json", quiet=True)
+    # Download the file
+    gdown.download(chunk_URL, "chunks.json", quiet=True)
 
-# Read and parse JSON
-with open("chunks.json", "r", encoding="utf-8") as f:
-    documents = json.load(f)
+    # Read and parse JSON
+    with open("chunks.json", "r", encoding="utf-8") as f:
+        documents = json.load(f)
+    return documents
 
-vector_FILE_ID = "1Ca0O7cjAbI3t_OdCciQ0aI2MeJ7kN7SC"
-vector_URL = f"https://drive.google.com/uc?id={vector_FILE_ID}"
-# Download the FAISS index file
-gdown.download(vector_URL, "faissindex.index", quiet=True)
-
+def vector_data():
+    vector_FILE_ID = "1Ca0O7cjAbI3t_OdCciQ0aI2MeJ7kN7SC"
+    vector_URL = f"https://drive.google.com/uc?id={vector_FILE_ID}"
+    # Download the FAISS index file
+    gdown.download(vector_URL, "faissindex.index", quiet=True)
+    faiss_index = faiss.read_index("faissindex.index")
+    return faiss_index
 
 def retrieve_document(user_question):
-    faiss_index = faiss.read_index("faissindex.index")
+    documents = chunk_data()
+    faiss_index = vector_data()
     if not faiss_index or not documents:
         return ["No document data available. Please upload a PDF first."]
     query_embedding = model.encode([user_question])
