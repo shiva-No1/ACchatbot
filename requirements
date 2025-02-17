@@ -1,0 +1,10 @@
+faiss-cpu
+numpy
+regex
+sentence-transformers
+streamlit
+langchain-core
+langchain
+langchain-groq
+requests
+dateparser
