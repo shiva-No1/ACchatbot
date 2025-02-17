@@ -31,7 +31,7 @@ if "final_url" not in st.session_state:
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 groq_chat = ChatGroq(
-    groq_api_key="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",  # Store the key in Streamlit secrets
+    groq_api_key="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",  # Store the key in Streamlit secrets
     model_name='deepseek-r1-distill-llama-70b'
 )
 
