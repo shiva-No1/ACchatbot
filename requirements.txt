@@ -8,3 +8,4 @@ langchain
 langchain-groq
 requests
 dateparser
+gdown
