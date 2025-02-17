@@ -11,7 +11,8 @@ from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 import requests
 import json
 import dateparser
-import gdown
+import boto3
+
 
 # Initialize Session State
 if "chat_history" not in st.session_state:
@@ -25,37 +26,51 @@ if "user_questions" not in st.session_state:
 if "final_url" not in st.session_state:
     st.session_state["final_url"] = {}
 
+
+# Access credentials from Streamlit secrets
+AWS_ACCESS_KEY_ID = st.secrets["aws"]["AWS_ACCESS_KEY_ID"]
+AWS_SECRET_ACCESS_KEY = st.secrets["aws"]["AWS_SECRET_ACCESS_KEY"]
+AWS_REGION = st.secrets["aws"]["AWS_REGION"]
+groq_api_key = st.secrets["groq"]["groq_api_key"]
+
 # Load SentenceTransformer model
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 groq_chat = ChatGroq(
-    groq_api_key="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",  # Store the key in Streamlit secrets
+    groq_api_key= groq_api_key,  
     model_name='deepseek-r1-distill-llama-70b'
 )
 
-def chunk_data():
-    chunk_FILE_ID = "1BNCPcxrqVMVosW96-u6LAYN5N6iOVBLq"
-    chunk_URL = f"https://drive.google.com/uc?id={chunk_FILE_ID}"
+# Initialize S3 client
+s3 = boto3.client(
+    "s3",
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    region_name=AWS_REGION
+)
 
-    # Download the file
-    gdown.download(chunk_URL, "chunks.json", quiet=True)
+# S3 bucket name
+bucket_name = "amberconnectdata"
 
-    # Read and parse JSON
-    with open("chunks.json", "r", encoding="utf-8") as f:
-        documents = json.load(f)
-    return documents
+# File names in S3
+json_file_key = "chunk.json"
+faiss_file_key = "faissindex.index"
 
-def vector_data():
-    vector_FILE_ID = "1Ca0O7cjAbI3t_OdCciQ0aI2MeJ7kN7SC"
-    vector_URL = f"https://drive.google.com/uc?id={vector_FILE_ID}"
-    # Download the FAISS index file
-    gdown.download(vector_URL, "faissindex.index", quiet=True)
-    faiss_index = faiss.read_index("faissindex.index")
-    return faiss_index
+# Function to fetch JSON data from S3
+def fetch_json_from_s3(bucket, key):
+    response = s3.get_object(Bucket=bucket, Key=key)
+    json_data = json.loads(response["Body"].read().decode("utf-8"))
+    return json_data
+    
+# Function to fetch FAISS index file as bytes
+def fetch_faiss_from_s3(bucket, key):
+    response = s3.get_object(Bucket=bucket, Key=key)
+    faiss_data = response["Body"].read()
+    return faiss_data
 
 def retrieve_document(user_question):
-    documents = chunk_data()
-    faiss_index = vector_data()
+    chunks_data = fetch_json_from_s3(bucket_name, json_file_key)
+    faiss_index_data = fetch_faiss_from_s3(bucket_name, faiss_file_key)
     if not faiss_index or not documents:
         return ["No document data available. Please upload a PDF first."]
     query_embedding = model.encode([user_question])
