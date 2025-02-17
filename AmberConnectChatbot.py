@@ -340,7 +340,6 @@ You are *Amber Assistant*, an AI specialized in vehicle tracking and fleet manag
     conversation = LLMChain(llm=groq_chat, prompt=prompt)
     data = conversation.predict(human_input=question, chat_history=st.session_state['chat_history'])
     clean_query = re.sub(r"<think>.*?</think>\s*", "", data, flags=re.DOTALL)
-    st.write('second llm')
     return clean_query
 
 
@@ -437,7 +436,7 @@ def main():
             else:
                 last_asked_qn = 'None'
                 api_data = 'None'
-            
+            st.write('this response is from final LLM')
             final_message = final_llm(last_asked_qn, api_data,user_question)
             st.session_state["chat_history"].append({"role": "assistant", "content": final_message})
             st.chat_message("assistant").write(final_message)
