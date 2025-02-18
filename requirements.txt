@@ -9,3 +9,4 @@ langchain-groq
 requests
 dateparser
 gdown
+boto3
