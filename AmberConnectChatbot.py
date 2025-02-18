@@ -418,10 +418,9 @@ def main():
             missing_params = f"Please provide {missing_param}."
             prompt = ask_llm(missing_params ,user_question)
             clean_prompt = re.sub(r"<think>.*?</think>\s*", "", prompt, flags=re.DOTALL)
-            st.session_state["chat_history"].append({"role": "assistant", "content": clean_prompt})
             
             if not (amber_auth_token and custom_start_date and custom_end_date and final_url):
-            
+                st.session_state["chat_history"].append({"role": "assistant", "content": clean_prompt})
                 st.chat_message("assistant").write(clean_prompt)
             
         if amber_auth_token and custom_start_date and custom_end_date and final_url :
