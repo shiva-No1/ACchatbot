@@ -378,8 +378,6 @@ def side_bar(amber_auth_token, custom_start_date, custom_end_date):
 def text_to_speech(text):
     """Convert text to speech and play audio in sync with text display (no st.audio)."""
 
-    # Initialize ElevenLabs client
-    Eleven_API_KEY = "sk_e518af6b20333a85aa5f7d3311bd812cb2d6a342dd5451fb"
     client = ElevenLabs(api_key=Eleven_API_KEY)
 
     # Generate speech as a stream
