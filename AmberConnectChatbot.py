@@ -38,6 +38,7 @@ AWS_ACCESS_KEY_ID = st.secrets["aws"]["AWS_ACCESS_KEY_ID"]
 AWS_SECRET_ACCESS_KEY = st.secrets["aws"]["AWS_SECRET_ACCESS_KEY"]
 AWS_REGION = st.secrets["aws"]["AWS_REGION"]
 groq_api_key = st.secrets["groq"]["groq_api_key"]
+Eleven_API_KEY = st.secrets["groq"][""Eleven_API_KEY""]
 
 # Load SentenceTransformer model
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
@@ -376,8 +377,7 @@ def text_to_speech(text):
     """Convert text to speech, sync text display, and play audio in sync."""
     
     # Initialize ElevenLabs client
-    API_KEY = "sk_e518af6b20333a85aa5f7d3311bd812cb2d6a342dd5451fb"
-    client = ElevenLabs(api_key=API_KEY)
+    client = ElevenLabs(api_key=Eleven_API_KEY)
 
     # Generate speech as a stream
     audio_stream = client.text_to_speech.convert_as_stream(
