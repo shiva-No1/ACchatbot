@@ -49,12 +49,6 @@ s3 = boto3.client(
     region_name=AWS_REGION
 )
 
-# S3 bucket name
-bucket_name = "amberconnectdata"
-
-# File names in S3
-json_file_key = "chunk.json"
-faiss_file_key = "faissindex.index"
 
 # Function to fetch JSON data from S3
 def fetch_json_from_s3(bucket, key):
@@ -381,8 +375,14 @@ def main():
             last_asked_qn = list(st.session_state["user_questions"].values())[-1]
             st.sidebar.subheader(f'This is user question about fleet:')
             st.sidebar.markdown(f'{last_asked_qn}')
+            # S3 bucket name
+            bucket_name = "amberconnectdata"
 
-            found_chunk = retrieve_document(last_asked_qn)
+            # File names in S3
+            json_file_key = "chunk.json"
+            faiss_file_key = "faissindex.index"
+            
+            found_chunk = retrieve_document(last_asked_qn,bucket_name,json_file_key,faiss_file_key)
             st.sidebar.subheader('Fetched the relevent chunk from the Vector DB...')
 
             matched_chunk = api_finder_llm(last_asked_qn, found_chunk)
