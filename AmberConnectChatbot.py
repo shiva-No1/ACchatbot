@@ -68,7 +68,7 @@ def fetch_faiss_from_s3(bucket, key):
     faiss_data = response["Body"].read()
     return faiss_data
 
-def retrieve_document(user_question):
+def retrieve_document(user_question,bucket_name,json_file_key,faiss_file_key):
     chunks_data = fetch_json_from_s3(bucket_name, json_file_key)
     faiss_index_data = fetch_faiss_from_s3(bucket_name, faiss_file_key)
     if not faiss_index_data or not chunks_data:
