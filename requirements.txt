@@ -10,3 +10,4 @@ requests
 dateparser
 gdown
 boto3
+elevenlabs
