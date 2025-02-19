@@ -16,6 +16,8 @@ import pygame
 from elevenlabs.client import ElevenLabs
 import io
 import time
+import base64
+
 
 # Initialize Session State
 if "chat_history" not in st.session_state:
@@ -374,8 +376,8 @@ def side_bar(amber_auth_token, custom_start_date, custom_end_date):
 
         
 def text_to_speech(text):
-    """Convert text to speech and play using Streamlit's audio player."""
-    
+    """Convert text to speech and play audio in sync with text display (no st.audio)."""
+
     # Initialize ElevenLabs client
     Eleven_API_KEY = "sk_e518af6b20333a85aa5f7d3311bd812cb2d6a342dd5451fb"
     client = ElevenLabs(api_key=Eleven_API_KEY)
@@ -395,22 +397,34 @@ def text_to_speech(text):
     
     audio_bytes.seek(0)  # Reset buffer position
 
-    # Use Streamlit's built-in audio player
-    st.audio(audio_bytes, format="audio/mp3")
+    # Encode audio to base64
+    audio_base64 = base64.b64encode(audio_bytes.getvalue()).decode("utf-8")
+    audio_data_url = f"data:audio/mp3;base64,{audio_base64}"
 
-    # Sync text display (word-by-word rendering)
+    # JavaScript to play audio immediately
+    js_code = f"""
+    <script>
+        var audio = new Audio("{audio_data_url}");
+        audio.oncanplay = function() {{
+            audio.play();
+        }};
+    </script>
+    """
+    
+    # Inject JavaScript FIRST to ensure the audio starts ASAP
+    st.components.v1.html(js_code, height=0)
+
+    # Display text while audio plays
     with st.chat_message("assistant"):
-        st_placeholder = st.empty()  # Placeholder for updating text dynamically
+        st_placeholder = st.empty()
         display_text = ""
 
-        words = text.split()  # Split text into words
-        word_delay = max(0.2, len(words) / 4)  # Adjust delay per word (tweak as needed)
+        words = text.split()
+        word_delay = max(0.15, len(words) / 4)  # Adjusted for better sync
 
         for word in words:
-            time.sleep(word_delay / len(words))  # Simulated delay per word
-            display_text += " " + word  # Append word to text
-            
-            # Update text dynamically inside the chat message
+            time.sleep(word_delay / len(words))  # Slightly reduced delay
+            display_text += " " + word
             st_placeholder.markdown(display_text)
 
 
