@@ -11,3 +11,4 @@ dateparser
 gdown
 boto3
 elevenlabs
+pygame
