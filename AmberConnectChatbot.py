@@ -56,20 +56,34 @@ def fetch_json_from_s3(bucket, key):
     json_data = json.loads(response["Body"].read().decode("utf-8"))
     return json_data
     
-# Function to fetch FAISS index file as bytes
+# Function to fetch and load FAISS index from S3
 def fetch_faiss_from_s3(bucket, key):
     response = s3.get_object(Bucket=bucket, Key=key)
     faiss_data = response["Body"].read()
-    return faiss_data
+    
+    # Save to a temporary file to load into FAISS
+    faiss_index_path = "/tmp/faiss_index.index"
+    with open(faiss_index_path, "wb") as f:
+        f.write(faiss_data)
+    
+    # Load FAISS index
+    index = faiss.read_index(faiss_index_path)
+    return index
 
 def retrieve_document(user_question,bucket_name,json_file_key,faiss_file_key):
     chunks_data = fetch_json_from_s3(bucket_name, json_file_key)
-    faiss_index_data = fetch_faiss_from_s3(bucket_name, faiss_file_key)
-    if not faiss_index_data or not chunks_data:
+    faiss_index = fetch_faiss_from_s3(bucket_name, faiss_file_key)
+
+    if faiss_index is None or not chunks_data:
         return ["No document data available. Please upload a PDF first."]
-    query_embedding = model.encode([user_question])
-    _, indices = faiss_index_data.search(np.array(query_embedding), k=3)
-    return [chunks_data[idx] for idx in indices[0]]
+
+    # Encode query
+    query_embedding = model.encode([user_question]).astype(np.float32)
+
+    # Perform FAISS search
+    _, indices = faiss_index.search(query_embedding, k=3)
+
+    return [chunks_data[idx] for idx in indices[0] if idx < len(chunks_data)]
 
 def api_finder_llm(user_question, found_chunk):
     system_prompt = f"""
