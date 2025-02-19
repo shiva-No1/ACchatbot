@@ -374,9 +374,10 @@ def side_bar(amber_auth_token, custom_start_date, custom_end_date):
 
         
 def text_to_speech(text):
-    """Convert text to speech, sync text display, and play audio in sync."""
+    """Convert text to speech and play using Streamlit's audio player."""
     
     # Initialize ElevenLabs client
+    Eleven_API_KEY = "sk_e518af6b20333a85aa5f7d3311bd812cb2d6a342dd5451fb"
     client = ElevenLabs(api_key=Eleven_API_KEY)
 
     # Generate speech as a stream
@@ -394,10 +395,8 @@ def text_to_speech(text):
     
     audio_bytes.seek(0)  # Reset buffer position
 
-    # Initialize pygame mixer
-    pygame.mixer.init()
-    pygame.mixer.music.load(audio_bytes, 'mp3')  # Load from memory
-    pygame.mixer.music.play()
+    # Use Streamlit's built-in audio player
+    st.audio(audio_bytes, format="audio/mp3")
 
     # Sync text display (word-by-word rendering)
     with st.chat_message("assistant"):
@@ -414,9 +413,6 @@ def text_to_speech(text):
             # Update text dynamically inside the chat message
             st_placeholder.markdown(display_text)
 
-    # Wait for audio to finish playing
-    while pygame.mixer.music.get_busy():
-        pygame.time.Clock().tick(10)
 
 def main():
     st.header("Amber connect chatbot")
