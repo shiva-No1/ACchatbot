@@ -71,11 +71,11 @@ def fetch_faiss_from_s3(bucket, key):
 def retrieve_document(user_question):
     chunks_data = fetch_json_from_s3(bucket_name, json_file_key)
     faiss_index_data = fetch_faiss_from_s3(bucket_name, faiss_file_key)
-    if not faiss_index or not documents:
+    if not faiss_index_data or not chunks_data:
         return ["No document data available. Please upload a PDF first."]
     query_embedding = model.encode([user_question])
-    _, indices = faiss_index.search(np.array(query_embedding), k=3)
-    return [documents[idx] for idx in indices[0]]
+    _, indices = faiss_index_data.search(np.array(query_embedding), k=3)
+    return [chunks_data[idx] for idx in indices[0]]
 
 def api_finder_llm(user_question, found_chunk):
     system_prompt = f"""
