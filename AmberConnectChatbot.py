@@ -12,7 +12,10 @@ import requests
 import json
 import dateparser
 import boto3
-
+import pygame
+from elevenlabs.client import ElevenLabs
+import io
+import time
 
 # Initialize Session State
 if "chat_history" not in st.session_state:
@@ -368,6 +371,52 @@ def side_bar(amber_auth_token, custom_start_date, custom_end_date):
     else:
         st.sidebar.info(f'Custom_start_date : {custom_end_date}')
 
+        
+def text_to_speech(text):
+    """Convert text to speech, sync text display, and play audio in sync."""
+    
+    # Initialize ElevenLabs client
+    API_KEY = "sk_e518af6b20333a85aa5f7d3311bd812cb2d6a342dd5451fb"
+    client = ElevenLabs(api_key=API_KEY)
+
+    # Generate speech as a stream
+    audio_stream = client.text_to_speech.convert_as_stream(
+        text=text,
+        voice_id="JBFqnCBsd6RMkjVDRZzb",  # Voice ID
+        model_id="eleven_multilingual_v2"
+    )
+
+    # Store audio in memory
+    audio_bytes = io.BytesIO()
+    for chunk in audio_stream:
+        if isinstance(chunk, bytes):
+            audio_bytes.write(chunk)
+    
+    audio_bytes.seek(0)  # Reset buffer position
+
+    # Initialize pygame mixer
+    pygame.mixer.init()
+    pygame.mixer.music.load(audio_bytes, 'mp3')  # Load from memory
+    pygame.mixer.music.play()
+
+    # Sync text display (word-by-word rendering)
+    with st.chat_message("assistant"):
+        st_placeholder = st.empty()  # Placeholder for updating text dynamically
+        display_text = ""
+
+        words = text.split()  # Split text into words
+        word_delay = max(0.2, len(words) / 4)  # Adjust delay per word (tweak as needed)
+
+        for word in words:
+            time.sleep(word_delay / len(words))  # Simulated delay per word
+            display_text += " " + word  # Append word to text
+            
+            # Update text dynamically inside the chat message
+            st_placeholder.markdown(display_text)
+
+    # Wait for audio to finish playing
+    while pygame.mixer.music.get_busy():
+        pygame.time.Clock().tick(10)
 
 def main():
     st.header("Amber connect chatbot")
@@ -441,7 +490,8 @@ def main():
             if not (amber_auth_token and custom_start_date and custom_end_date and final_url):
 
                 st.session_state["chat_history"].append({"role": "assistant", "content": clean_prompt})
-                st.chat_message("assistant").write(clean_prompt)
+                text_to_speech(clean_prompt)
+                
             
         if amber_auth_token and custom_start_date and custom_end_date and final_url:
             
@@ -472,6 +522,6 @@ def main():
             
             final_message = final_llm(last_asked_qn, api_data,user_question)
             st.session_state["chat_history"].append({"role": "assistant", "content": final_message})
-            st.chat_message("assistant").write(final_message)
+            text_to_speech(final_message)
 
 main()
