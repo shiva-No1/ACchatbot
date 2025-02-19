@@ -26,6 +26,9 @@ if "user_questions" not in st.session_state:
 if "final_url" not in st.session_state:
     st.session_state["final_url"] = {}
 
+if "first_question" not in st.session_state:
+    st.session_state["first_question"] = False
+
 
 # Access credentials from Streamlit secrets
 AWS_ACCESS_KEY_ID = st.secrets["aws"]["AWS_ACCESS_KEY_ID"]
