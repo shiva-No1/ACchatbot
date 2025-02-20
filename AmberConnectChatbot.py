@@ -17,7 +17,10 @@ from elevenlabs.client import ElevenLabs
 import io
 import time
 import base64
-
+import time
+import wave
+from groq import Groq
+import sounddevice as sd
 
 # Initialize Session State
 if "chat_history" not in st.session_state:
@@ -57,6 +60,108 @@ s3 = boto3.client(
     aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
     region_name=AWS_REGION
 )
+
+# Set API Key
+client = Groq(api_key = "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" )
+
+
+# Optimized Parameters
+SILENCE_THRESHOLD = 1000
+SILENCE_DURATION = 1.0
+INITIAL_SILENCE_TIMEOUT = 3.0
+SAMPLE_RATE = 44100
+CHANNELS = 1
+CHUNK_DURATION = 0.05
+
+# Generic noise-like responses from Whisper
+GENERIC_RESPONSES = [
+    "The audio is now available in English.",
+    "This is a translation.",
+    "The speech has been processed."
+]
+
+
+with open("chunks.json", "r", encoding="utf-8") as f:
+    documents = json.load(f)
+
+def rms_energy(audio_chunk):
+    """Calculate RMS energy safely."""
+    if len(audio_chunk) == 0:
+        return 0
+    return np.sqrt(np.mean(np.square(audio_chunk.astype(np.float32))))  
+
+def record_audio():
+    """Record audio dynamically until silence is detected or no speech is found."""
+
+    audio_data = []
+    silence_counter = 0
+    total_time = 0
+    is_speaking = False
+    has_spoken = False  
+
+    with sd.InputStream(samplerate=SAMPLE_RATE, channels=CHANNELS, dtype="int16") as stream:
+        while True:
+            frame, _ = stream.read(int(SAMPLE_RATE * CHUNK_DURATION))
+            audio_chunk = np.frombuffer(frame, dtype=np.int16)
+
+            if len(audio_chunk) == 0:
+                continue  
+
+            audio_data.append(audio_chunk)
+
+            # Check if the user is speaking
+            if rms_energy(audio_chunk) > SILENCE_THRESHOLD:
+                is_speaking = True
+                has_spoken = True  
+                silence_counter = 0  
+
+            elif is_speaking:  
+                silence_counter += CHUNK_DURATION  
+
+            total_time += CHUNK_DURATION
+
+            if silence_counter >= SILENCE_DURATION:
+                break
+
+            if total_time >= INITIAL_SILENCE_TIMEOUT and not has_spoken:
+                st.error("❌ No voice detected. Stopping.")
+                return None  
+
+    if not has_spoken:
+        st.error("❌ No voice detected.")
+        return None
+
+    recorded_audio = np.concatenate(audio_data, axis=0)
+
+    audio_buffer = io.BytesIO()
+    with wave.open(audio_buffer, "wb") as wf:
+        wf.setnchannels(CHANNELS)
+        wf.setsampwidth(2)
+        wf.setframerate(SAMPLE_RATE)
+        wf.writeframes(recorded_audio.tobytes())
+
+    audio_buffer.seek(0)
+    return audio_buffer
+
+def speech_to_text(audio_buffer):
+    """Send recorded audio to Groq Whisper for speech-to-text processing."""
+    if audio_buffer is None:  
+        return None
+
+    translation = client.audio.translations.create(
+        file=("recorded_audio.wav", audio_buffer, "audio/wav"),
+        model="whisper-large-v3",
+        prompt="Only extract clear spoken words.",
+        response_format="json",
+        temperature=0.0
+    )
+
+    recognized_text = translation.text.strip()
+
+    # if recognized_text in GENERIC_RESPONSES or len(recognized_text.split()) < 5:
+    #     return "No text extracted. Please provide a proper voice input."
+
+    return recognized_text
 
 
 # Function to fetch JSON data from S3
@@ -430,16 +535,40 @@ def main():
     st.header("Amber connect chatbot")
     st.sidebar.header('Debug Mode:')
     
+    mic_question = None
+    with st.sidebar:
+        mic_container = st.container()
+        with mic_container:
+            col1, col2 = st.columns([4, 2])  # Adjust column widths
+
+            with col1:
+                st.subheader("Use this MIC for voice chat: ")
+
+            with col2:
+                if st.button("🎙️", key="mic_button_sidebar"):
+                    with st.spinner("Recording started..."):
+                        audio = record_audio()
+                        
+                    mic = speech_to_text(audio)
+                    mic_question = mic
+    
     for chat in st.session_state.chat_history:
         if isinstance(chat, tuple):  # Fix tuple format
             role, content = chat
             chat = {"role": role, "content": content}
         st.chat_message(chat["role"]).write(chat["content"])
 
-    user_question = st.chat_input("Enter your question...")
-    if user_question:
-        st.session_state["chat_history"].append({"role": "user", "content": user_question})  # Ensure dict format
-        st.chat_message("user").write(user_question)
+    user_question = None
+    user_chat_question = st.chat_input("Enter your question...")
+
+    if user_chat_question:
+        st.session_state["chat_history"].append({"role": "user", "content": user_chat_question})  # Ensure dict format
+        st.chat_message("user").write(user_chat_question)
+        user_question = user_chat_question
+    if mic_question:
+        st.session_state["chat_history"].append({"role": "user", "content": mic_question})  # Ensure dict format
+        st.chat_message("user").write(mic_question)
+        user_question = mic_question
 
     qn = user_problem(user_question)
     if qn =='yes':
