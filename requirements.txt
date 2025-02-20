@@ -12,3 +12,6 @@ gdown
 boto3
 elevenlabs
 pygame
+wave
+sounddevice
+groq
