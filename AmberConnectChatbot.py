@@ -44,6 +44,7 @@ AWS_SECRET_ACCESS_KEY = st.secrets["aws"]["AWS_SECRET_ACCESS_KEY"]
 AWS_REGION = st.secrets["aws"]["AWS_REGION"]
 groq_api_key = st.secrets["groq"]["groq_api_key"]
 Eleven_API_KEY = st.secrets["groq"]["Eleven_API_KEY"]
+groq_api_key = st.secrets["groq"]["groq_key"]
 
 # Load SentenceTransformer model
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
@@ -62,7 +63,7 @@ s3 = boto3.client(
 )
 
 # Set API Key
-client = Groq(api_key = "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" )
+client = Groq(api_key = groq_api_key  )
 
 
 # Optimized Parameters
