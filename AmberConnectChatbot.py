@@ -39,12 +39,12 @@ if "first_question" not in st.session_state:
 
 
 # Access credentials from Streamlit secrets
-AWS_ACCESS_KEY_ID = st.secrets["aws"]["AWS_ACCESS_KEY_ID"]
-AWS_SECRET_ACCESS_KEY = st.secrets["aws"]["AWS_SECRET_ACCESS_KEY"]
-AWS_REGION = st.secrets["aws"]["AWS_REGION"]
-groq_api_key = st.secrets["groq"]["groq_api_key"]
-Eleven_API_KEY = st.secrets["groq"]["Eleven_API_KEY"]
-groq_api_key = st.secrets["groq"]["groq_key"]
+AWS_ACCESS_KEY_ID = st.secrets["AWS_ACCESS_KEY_ID"]
+AWS_SECRET_ACCESS_KEY = st.secrets["AWS_SECRET_ACCESS_KEY"]
+AWS_REGION = st.secrets["AWS_REGION"]
+groq_api_key = st.secrets["groq_api_key"]
+Eleven_API_KEY = st.secrets["Eleven_API_KEY"]
+
 
 # Load SentenceTransformer model
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
