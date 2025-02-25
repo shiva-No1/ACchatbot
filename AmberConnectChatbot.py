@@ -533,22 +533,22 @@ def main():
     st.header("Amber connect chatbot")
     st.sidebar.header('Debug Mode:')
     
-    mic_question = None
-    with st.sidebar:
-        mic_container = st.container()
-        with mic_container:
-            col1, col2 = st.columns([4, 2])  # Adjust column widths
+    # mic_question = None
+    # with st.sidebar:
+    #     mic_container = st.container()
+    #     with mic_container:
+    #         col1, col2 = st.columns([4, 2])  # Adjust column widths
 
-            with col1:
-                st.subheader("Use this MIC for voice chat: ")
+    #         with col1:
+    #             st.subheader("Use this MIC for voice chat: ")
 
-            with col2:
-                if st.button("🎙️", key="mic_button_sidebar"):
-                    with st.spinner("Recording started..."):
-                        audio = record_audio()
+    #         with col2:
+    #             if st.button("🎙️", key="mic_button_sidebar"):
+    #                 with st.spinner("Recording started..."):
+    #                     audio = record_audio()
                         
-                    mic = speech_to_text(audio)
-                    mic_question = mic
+    #                 mic = speech_to_text(audio)
+    #                 mic_question = mic
     
     for chat in st.session_state.chat_history:
         if isinstance(chat, tuple):  # Fix tuple format
