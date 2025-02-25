@@ -82,9 +82,6 @@ GENERIC_RESPONSES = [
 ]
 
 
-with open("chunks.json", "r", encoding="utf-8") as f:
-    documents = json.load(f)
-
 def rms_energy(audio_chunk):
     """Calculate RMS energy safely."""
     if len(audio_chunk) == 0:
