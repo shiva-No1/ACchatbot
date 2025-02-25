@@ -15,4 +15,4 @@ pygame
 wave
 sounddevice
 groq
-portaudio19-dev
+
