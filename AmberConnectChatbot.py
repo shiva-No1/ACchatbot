@@ -563,10 +563,10 @@ def main():
         st.session_state["chat_history"].append({"role": "user", "content": user_chat_question})  # Ensure dict format
         st.chat_message("user").write(user_chat_question)
         user_question = user_chat_question
-    if mic_question:
-        st.session_state["chat_history"].append({"role": "user", "content": mic_question})  # Ensure dict format
-        st.chat_message("user").write(mic_question)
-        user_question = mic_question
+    # if mic_question:
+    #     st.session_state["chat_history"].append({"role": "user", "content": mic_question})  # Ensure dict format
+    #     st.chat_message("user").write(mic_question)
+    #     user_question = mic_question
 
     qn = user_problem(user_question)
     if qn =='yes':
