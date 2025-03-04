@@ -10,7 +10,7 @@ requests
 dateparser
 gdown
 boto3
-elevenlabs
+pyttsx3
 pygame
 wave
 sounddevice
