@@ -13,7 +13,6 @@ import json
 import dateparser
 import boto3
 import pygame
-from elevenlabs.client import ElevenLabs
 import io
 import time
 import base64
@@ -21,6 +20,8 @@ import time
 import wave
 from groq import Groq
 import sounddevice as sd
+import pyttsx3
+import tempfile
 
 # Initialize Session State
 if "chat_history" not in st.session_state:
@@ -43,8 +44,6 @@ AWS_ACCESS_KEY_ID = st.secrets["AWS_ACCESS_KEY_ID"]
 AWS_SECRET_ACCESS_KEY = st.secrets["AWS_SECRET_ACCESS_KEY"]
 AWS_REGION = st.secrets["AWS_REGION"]
 groq_api_key = st.secrets["groq_api_key"]
-Eleven_API_KEY = st.secrets["Eleven_API_KEY"]
-
 
 # Load SentenceTransformer model
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
@@ -479,55 +478,48 @@ def side_bar(amber_auth_token, custom_start_date, custom_end_date):
 
         
 def text_to_speech(text):
-    """Convert text to speech and play audio in sync with text display (no st.audio)."""
+    """Convert text to speech using pyttsx3 with a faster, bolder voice,
+    display the text word-by-word, and play the audio."""
+    if not text:
+        return
 
-    client = ElevenLabs(api_key=Eleven_API_KEY)
+    # Initialize pyttsx3 engine
+    engine = pyttsx3.init()
 
-    # Generate speech as a stream
-    audio_stream = client.text_to_speech.convert_as_stream(
-        text=text,
-        voice_id="JBFqnCBsd6RMkjVDRZzb",  # Voice ID
-        model_id="eleven_multilingual_v2"
-    )
+    # Set voice properties:
+    engine.setProperty('rate', 180)  # Adjust the speed (higher value for faster speech)
 
-    # Store audio in memory
-    audio_bytes = io.BytesIO()
-    for chunk in audio_stream:
-        if isinstance(chunk, bytes):
-            audio_bytes.write(chunk)
-    
-    audio_bytes.seek(0)  # Reset buffer position
+    # Choose a voice that sounds "bolder". Experiment with available voices.
+    voices = engine.getProperty('voices')
+    engine.setProperty('voice', voices[1].id if len(voices) > 1 else voices[0].id)
 
-    # Encode audio to base64
-    audio_base64 = base64.b64encode(audio_bytes.getvalue()).decode("utf-8")
-    audio_data_url = f"data:audio/mp3;base64,{audio_base64}"
+    # Create a temporary file with .wav extension to store the synthesized speech
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_audio:
+        temp_filename = temp_audio.name
 
-    # JavaScript to play audio immediately
-    js_code = f"""
-    <script>
-        var audio = new Audio("{audio_data_url}");
-        audio.oncanplay = function() {{
-            audio.play();
-        }};
-    </script>
-    """
-    
-    # Inject JavaScript FIRST to ensure the audio starts ASAP
-    st.components.v1.html(js_code, height=0)
+    # Save the synthesized speech to the temporary file
+    engine.save_to_file(text, temp_filename)
+    engine.runAndWait()
 
-    # Display text while audio plays
+    # Initialize pygame mixer and load the audio from the temporary file
+    pygame.mixer.init()
+    pygame.mixer.music.load(temp_filename)
+    pygame.mixer.music.play()
+
+    # Sync text display (word-by-word rendering) using Streamlit
     with st.chat_message("assistant"):
         st_placeholder = st.empty()
         display_text = ""
-
         words = text.split()
-        word_delay = max(0.15, len(words) / 4)  # Adjusted for better sync
-
+        word_delay = max(0.2, len(words) / 4)
         for word in words:
-            time.sleep(word_delay / len(words))  # Slightly reduced delay
+            time.sleep(word_delay / len(words))
             display_text += " " + word
             st_placeholder.markdown(display_text)
 
+    # Wait until audio playback is complete
+    while pygame.mixer.music.get_busy():
+        pygame.time.Clock().tick(10)
 
 def main():
     st.header("Amber connect chatbot")
